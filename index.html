@@ -13,7 +13,19 @@
       <!-- Todo List items are added to this container -->
     </div>
     <form id="add-item" class="" action="index.html" method="post">
+      <label for="item">Item</label>
+      <input id="item" type="text" name="item" placeholder="Add todo item here!">
 
+      <label for="item-description">Description</label>
+      <textarea id="item-description" name="item-description" rows="8" cols="40"></textarea>
+
+      <label for="item-deadline">Deadline</label>
+      <input id="item-deadline" type="time" name="item-deadline">
+
+      <label for="item-location">Location</label>
+      <input id="item-location" name="item-location" type="text">
+
+      <input type="submit" value="Add">
     </form>
     <footer>
       <p>
