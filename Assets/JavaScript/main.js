@@ -1,6 +1,7 @@
 // Used to set the item ID
 var numberOfItems = 0
-
+var todoItems = {}
+new google.maps.places.Autocomplete(document.getElementById('item-location'))
 $("#add-item").submit(function(event) {
   event.preventDefault()
 
@@ -8,8 +9,10 @@ $("#add-item").submit(function(event) {
     'name': $("#item").val(),
     'description': $("#item-description").val(),
     'deadline': $("#item-deadline").val(),
-    'location': $("#item-location").val()
+    'location': $("#item-location").val(),
+    'itemId': 'item' + numberOfItems
   };
+  todoItems[newItem.itemId] = newItem
 
   let $itemContainer = $("<li class='todo-item' id='item" + numberOfItems++ + "'>'" )
 
@@ -25,8 +28,6 @@ $("#add-item").submit(function(event) {
   editItem()
   deleteItem()
 
-
-
 })
 
 function editItem() {
@@ -34,12 +35,7 @@ function editItem() {
     let $todoItem =$(this).parent()
     var itemId = $todoItem.attr('id')
 
-    let editItemObj = {
-      name: $(this).siblings(".item-name").text(),
-      description: $(this).siblings(".item-description").text(),
-      deadline: $(this).siblings(".item-deadline").text(),
-      location: $(this).siblings(".item-location").text()
-    }
+    var editItemObj = todoItems[itemId]
 
     $todoItem.empty();
 
@@ -49,14 +45,12 @@ function editItem() {
     editForm.append("<input id='edit-"+ itemId + "-deadline' type='time' name='deadline' value='" + editItemObj.deadline + "'>")
     editForm.append("<input id='edit-" + itemId + "-location' value='" + editItemObj.location + "' >")
     editForm.append("<input class='button-save' type='submit' value='Save'>")
-
-
     $todoItem.append(editForm)
-
+    new google.maps.places.Autocomplete(document.getElementById('edit-'+ itemId +'-location'))
     $("#edit-item-" + itemId).submit(function(event){
       event.preventDefault()
 
-      let saveItem = {
+      todoItems[itemId] = {
         name: $("#edit-"+ itemId + "-name").val(),
         description:  $("#edit-"+ itemId + "-description").val(),
         deadline:  $("#edit-"+ itemId + "-deadline").val(),
@@ -65,10 +59,10 @@ function editItem() {
 
       $todoItem.empty()
 
-      $todoItem.append("<h3 class='item-name'>" + saveItem.name + "</h3>")
-      $todoItem.append("<p class='item-description'>" + saveItem.description + "</p>")
-      $todoItem.append("<p class='item-deadline'>" + saveItem.deadline + "</p>" )
-      $todoItem.append("<p class='item-location'>" + saveItem.location + "</p>")
+      $todoItem.append("<h3 class='item-name'>" + todoItems[itemId].name + "</h3>")
+      $todoItem.append("<p class='item-description'>" + todoItems[itemId].description + "</p>")
+      $todoItem.append("<p class='item-deadline'>" + todoItems[itemId].deadline + "</p>" )
+      $todoItem.append("<p class='item-location'>" + todoItems[itemId].location + "</p>")
       $todoItem.append("<button class='edit-item' name='edit'>Edit</button>")
       $todoItem.append("<button class='delete-item' name='Delete'>Delete</button>")
 
@@ -80,6 +74,8 @@ function editItem() {
 }
 function deleteItem() {
   $(".delete-item").click(function() {
-    $(this).parent().remove();
+    let itemId = $(this).parent().attr('id')
+    delete todoItems[itemId]
+    $(this).parent().remove()
   })
 }
