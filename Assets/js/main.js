@@ -8,14 +8,112 @@ var totalCardTimes = 0
 var locationObj = {}
 // Used for sorting and redrawing the list
 var todoCardArray = []
-function formatTime(time) {
-  let hours = Math.floor(time / 60)
-  let minutes = time % 60
-  if (minutes < 10) {
-    minutes = "0" + minutes
-  }
-  return hours + " hours and " + minutes + " minutes"
-}
+// Document Ready items
+// Modal trigger and other event handlers
+$(document).ready(function(){
+  $('.modal-trigger').leanModal({
+    dismissible: true, // Modal can be dismissed by clicking outside of the modal
+    opacity: .5, // Opacity of modal background
+    in_duration: 300, // Transition in duration
+    out_duration: 200, // Transition out duration
+    starting_top: '4%', // Starting top style attribute
+    ending_top: '10%', // Ending top style attribute
+  })
+  $("#item-location").click(function() {
+    var autocomplete = new google.maps.places.Autocomplete(document.getElementById('item-location'))
+    autocomplete.addListener('place_changed', function() {
+    locationObj = autocomplete.getPlace()
+    })
+  })
+  // Add item to list
+  $("#add-item").submit(function(event) {
+    event.preventDefault()
+    let photo
+    if (locationObj.photos !== undefined) {
+      photo = locationObj.photos[0].getUrl({'maxWidth': 200, 'maxHeight': 200})
+    } else{
+      photo = "./assets/images/no_photo_available_large.png"
+    }
+    let time = Number($("#time-hr").val()) * 60 + Number($("#time-min").val())
+    let newItem = {
+      'name': $("#item").val(),
+      'description': $("#item-description").val(),
+      'time': time,
+      'location': {
+        address: $("#item-location").val(),
+        place: locationObj
+      },
+      photo: photo,
+      importance: $("#importance-scale").val(),
+      'itemId': 'item' + numberOfItems
+    }
+    totalCardTimes += time * 60
+    if ($.isEmptyObject(cardItems)) {
+      $("#instructions").remove()
+      $("#sort-button").removeClass('disabled')
+      $("#sort-button").attr('data-activates', 'sort-options')
+      $('.dropdown-button').dropdown({
+       inDuration: 300,
+       outDuration: 225,
+       constrain_width: false, // Does not change width of dropdown to that of the activator
+       hover: true, // Activate on hover
+       gutter: 0, // Spacing from edge
+       belowOrigin: true, // Displays dropdown below the button
+       alignment: 'right' // Displays dropdown with edge aligned to the left of button
+     }
+   );
+    }
+    cardItems.push(newItem)
+    todoCardArray.push(newItem.itemId)
+    createCard(newItem)
+    deleteItem()
+    $('#add-item').trigger('reset')
+    $('#modal1').closeModal();
+  })
+  // Sort button event handlers
+  $("#quickest-first").click(function() {
+    cardItems = sortByShortestTime(cardItems)
+    clearList()
+    repopulateList(cardItems)
+  })
+  $("#longest-first").click(function() {
+    cardItems = sortByLongestTime(cardItems)
+    clearList()
+    repopulateList(cardItems)
+  })
+  $("#importance").click(function() {
+    cardItems = sortByImportance(cardItems)
+    clearList()
+    repopulateList(cardItems)
+  })
+  $("#name").click(function() {
+    console.log(sortByName(cardItems))
+    cardItems = sortByName(cardItems)
+    clearList()
+    repopulateList(cardItems)
+  })
+  $("#name-reverse").click(function() {
+    cardItems = sortByNameReverse(cardItems)
+    clearList()
+    repopulateList(cardItems)
+  })
+  $("#origin").click(function() {
+    new google.maps.places.Autocomplete(document.getElementById('origin'))
+  })
+  $("#destination").click(function() {
+    new google.maps.places.Autocomplete(document.getElementById('destination'))
+  })
+  $("#get-directions").submit(function(event) {
+    event.preventDefault()
+
+    let origin = $("#origin").val()
+    let destination = $("#destination").val()
+    calculateRoute(cardItems, origin, destination)
+    $('#get-directions').trigger('reset')
+    $('#directions').closeModal();
+  })
+});
+// Basic CRUD functions
 function createCard(todoItem) {
   let $row = $("<div id=" + todoItem.itemId + " class='row'>")
   let $col = $("<div class='col s10 m10'>")
@@ -126,77 +224,6 @@ function deleteItem(itemId) {
     $("#sort-button").attr("data-activates", "")
   }
 }
-// Add item to list
-$("#add-item").submit(function(event) {
-  event.preventDefault()
-  let photo
-  if (locationObj.photos !== undefined) {
-    photo = locationObj.photos[0].getUrl({'maxWidth': 200, 'maxHeight': 200})
-  } else{
-    photo = "./assets/images/no_photo_available_large.png"
-  }
-  let time = Number($("#time-hr").val()) * 60 + Number($("#time-min").val())
-  let newItem = {
-    'name': $("#item").val(),
-    'description': $("#item-description").val(),
-    'time': time,
-    'location': {
-      address: $("#item-location").val(),
-      place: locationObj
-    },
-    photo: photo,
-    importance: $("#importance-scale").val(),
-    'itemId': 'item' + numberOfItems
-  }
-  totalCardTimes += time * 60
-  if ($.isEmptyObject(cardItems)) {
-    $("#instructions").remove()
-    $("#sort-button").removeClass('disabled')
-    $("#sort-button").attr('data-activates', 'sort-options')
-    $('.dropdown-button').dropdown({
-     inDuration: 300,
-     outDuration: 225,
-     constrain_width: false, // Does not change width of dropdown to that of the activator
-     hover: true, // Activate on hover
-     gutter: 0, // Spacing from edge
-     belowOrigin: true, // Displays dropdown below the button
-     alignment: 'right' // Displays dropdown with edge aligned to the left of button
-   }
- );
-  }
-  cardItems.push(newItem)
-  todoCardArray.push(newItem.itemId)
-  createCard(newItem)
-  deleteItem()
-  $('#add-item').trigger('reset')
-  $('#modal1').closeModal();
-})
-$("#quickest-first").click(function() {
-  cardItems = sortByShortestTime(cardItems)
-  clearList()
-  repopulateList(cardItems)
-})
-$("#longest-first").click(function() {
-  cardItems = sortByLongestTime(cardItems)
-  clearList()
-  repopulateList(cardItems)
-})
-$("#importance").click(function() {
-  cardItems = sortByImportance(cardItems)
-  clearList()
-  repopulateList(cardItems)
-})
-$("#name").click(function() {
-  console.log(sortByName(cardItems))
-  cardItems = sortByName(cardItems)
-  clearList()
-  repopulateList(cardItems)
-})
-$("#name-reverse").click(function() {
-  cardItems = sortByNameReverse(cardItems)
-  clearList()
-  repopulateList(cardItems)
-})
 // Sort functions
 function sortByName(array) {
   return array.sort(function(a, b) {return a.name.toLowerCase() > b.name.toLowerCase()})
@@ -213,57 +240,18 @@ function sortByLongestTime(array) {
 function sortByImportance(array) {
   return array.sort(function(a, b) {return Number(a.importance) < Number(b.importance)})
 }
-function sortByCommuteTime(array, origin, destination) {
-  var locationArray =[]
-
-  for(item in array) {
-    locationArray.push(cardItems[item].location.address)
-  }
-  calculateRoute(directionsService, locationArray, origin, destination)
-}
-// Clear the screen of cards
-function clearList() {
-  $("#todo-list").empty()
-}
-// Remake all the cards that are saved in cardItems array
-function repopulateList(list) {
-  for(item in list) {
-    createCard(list[item])
-  }
-}
-$(document).ready(function(){
-    $('.modal-trigger').leanModal({
-      dismissible: true, // Modal can be dismissed by clicking outside of the modal
-      opacity: .5, // Opacity of modal background
-      in_duration: 300, // Transition in duration
-      out_duration: 200, // Transition out duration
-      starting_top: '4%', // Starting top style attribute
-      ending_top: '10%', // Ending top style attribute
-      // ready: function() {
-      // }) }, // Callback for Modal open
-      // complete: function() { alert('Closed'); } // Callback for Modal close
-    }
-  );
-});
-$("#item-location").click(function() {
-  var autocomplete = new google.maps.places.Autocomplete(document.getElementById('item-location'))
-  autocomplete.addListener('place_changed', function() {
-    locationObj = autocomplete.getPlace()
-  })
-})
-var directionsService = new google.maps.DirectionsService;
-function calculateRoute(directionsService, locationArray, origin, destination) {
+function calculateRoute(array, origin, destination) {
+  var directionsService = new google.maps.DirectionsService;
   var waypts = []
   var totalTime = 0
   var totalDistance = 0
 
-  for (address of locationArray) {
+  for (item in array) {
     waypts.push({
-      location: address,
+      location: cardItems[item].location.address,
       stopover: true
     })
   }
-  console.log(waypts)
 
   directionsService.route({
     origin: origin,
@@ -280,7 +268,6 @@ function calculateRoute(directionsService, locationArray, origin, destination) {
         totalTime += route.legs[i].duration.value
         totalDistance += route.legs[i].distance.value
       }
-
       for(place of route["waypoint_order"]) {
         newRoute.push(waypts[place].location)
       }
@@ -291,28 +278,32 @@ function calculateRoute(directionsService, locationArray, origin, destination) {
           }
         }
       }
+      cardItems =  newCardArray
       clearList()
       $("#todo-list").append("<div class='row'><div class='col m10'><div class='card horizontal'><div class='card-stacked'><div class='card-content green lighten-5'><p class=' teal-text flow-text'>" + origin + "</p><p class=' flow-text'> Your commute time is: " + Math.floor(Math.floor(totalTime / 60) / 60) + " hours " + Math.floor(totalTime/60) % 60 + " minutes and " + totalTime% 60 + " seconds</p></div></div></div></div></div>")
-      repopulateList(newCardArray)
+      repopulateList(cardItems)
       $("#todo-list").append("<div class='row'><div class='col m10'><div class='card horizontal'><div class='card-stacked'><div class='card-content green lighten-5'><p class=' teal-text flow-text'>" + destination + "</p><p> Total time for tasks and commute: " + Math.floor(Math.floor((totalTime + totalCardTimes) / 60) / 60) + " hours " + Math.floor((totalTime + totalCardTimes)/60) % 60 + " minutes and " + (totalTime + totalCardTimes)% 60 + " seconds</p></div></div></div></div></div>")
-      cardItems =  newCardArray
     } else {
       window.alert('Directions request failed due to ' + status);
     }
   });
 }
-$("#origin").click(function() {
-  new google.maps.places.Autocomplete(document.getElementById('origin'))
-})
-$("#destination").click(function() {
-  new google.maps.places.Autocomplete(document.getElementById('destination'))
-})
-$("#get-directions").submit(function(event) {
-  event.preventDefault()
-
-  let origin = $("#origin").val()
-  let destination = $("#destination").val()
-  sortByCommuteTime(cardItems, origin, destination)
-  $('#get-directions').trigger('reset')
-  $('#directions').closeModal();
-})
+// Clear the screen of cards
+function clearList() {
+  $("#todo-list").empty()
+}
+// Remake all the cards that are saved in cardItems array
+function repopulateList(list) {
+  for(item in list) {
+    createCard(list[item])
+  }
+}
+// Formating functions
+function formatTime(time) {
+  let hours = Math.floor(time / 60)
+  let minutes = time % 60
+  if (minutes < 10) {
+    minutes = "0" + minutes
+  }
+  return hours + " hours and " + minutes + " minutes"
+}
