@@ -1,0 +1,26 @@
+.down-arrow {
+  width: 0;
+  height: 0;
+
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid grey;
+  float: right;
+}
+
+.up-arrow:hover{
+  cursor: pointer;
+}
+.up-arrow {
+  width: 0;
+  height: 0;
+
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid grey;
+  float: right;
+}
+
+.up-arrow:hover{
+  cursor: pointer;
+}

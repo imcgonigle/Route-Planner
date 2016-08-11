@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <title>Todo List</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="./Assets/Styles/materialize.min.css">
+    <link rel="stylesheet" href="./assets/styles/materialize.min.css">
+    <link rel="stylesheet" href="./assets/styles/main.css">
   </head>
   <body class="grey lighten-4">
     <header>
@@ -55,12 +56,24 @@
       </div>
     </header>
     <main>
-      <div id="main-todolist-container" class="container ">
-        <!-- <nav>
-          <div class="nav-wrapper orange">
-            <a href="#!" class="brand-logo center">Todo List</a>
+      <div id="main-todolist-container" class="container">
+
+          <div id="quick-add" class="row">
+            <div class="col m10">
+              <div class="card">
+                <div class="card-content">
+                    <form id="quick-add-form" class="" action="index.html" method="post">
+                    <div class="input-field">
+                      <input id="card-title" type="text" required>
+                      <label for="card-title">New Card Title</label>
+                    </div>
+
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
-        </nav> -->
+
         <div id="instructions" class="row">
           <div class="col m10" >
             <div class="card hoverable">
@@ -72,6 +85,7 @@
         </div>
         <div id="todo-list">
         </div>
+
         <!-- Modal Trigger -->
         <div id="todo-list-actions" class="horizontal right-align">
             <a class="btn-floating btn-large waves-effect modal-trigger waves-light red right" href="#modal1"><i class="material-icons">add</i></a>
@@ -138,7 +152,7 @@
     </script> -->
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBgurW0r7vKwTLkkcGpfTchX_rKKrAlZWA&libraries=places"></script>
     <script src="https://code.jquery.com/jquery-3.1.0.js" charset="utf-8"></script>
-    <script src="./Assets/js/main.js" charset="utf-8"></script>
+    <script src="./assets/js/main.js" charset="utf-8"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/js/materialize.min.js"></script>
   </body>
 </html>

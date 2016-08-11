@@ -1,6 +1,7 @@
 // ----------------------------------------------
 // Used to set the item ID
 var numberOfItems = 0
+var quickAddExpanded = false
 // Used to keep track of the elements currently on the list
 var cardItems =[]
 var totalCardTimes = 0
@@ -19,11 +20,59 @@ $(document).ready(function(){
     starting_top: '4%', // Starting top style attribute
     ending_top: '10%', // Ending top style attribute
   })
-  $("#item-location").click(function() {
-    var autocomplete = new google.maps.places.Autocomplete(document.getElementById('item-location'))
+  $("#item-location").focus(function() {
+    let autocomplete = new google.maps.places.Autocomplete(document.getElementById('item-location'))
     autocomplete.addListener('place_changed', function() {
     locationObj = autocomplete.getPlace()
     })
+  })
+  // Quick add
+  $("#quick-add-form").submit(function(event) {
+    event.preventDefault()
+
+    let photo
+
+    if (locationObj.photos !== undefined) {
+      photo = locationObj.photos[0].getUrl({'maxWidth': 200, 'maxHeight': 200})
+    } else{
+      photo = "./assets/images/no_photo_available_large.png"
+    }
+    let time = 60
+    let newItem = {
+      'name': $("#card-title").val(),
+      'description':"",
+      'time': time,
+      'location': {
+        address: $("#card-location").val(),
+        place: locationObj
+      },
+      photo: photo,
+      importance: "5",
+      'itemId': 'item' + numberOfItems
+    }
+    $("#quickButtonDiv").remove()
+    $("#quickLocationDiv").remove()
+    quickAddExpanded = false
+    totalCardTimes += time * 60
+    if ($.isEmptyObject(cardItems)) {
+      $("#instructions").remove()
+      $("#sort-button").removeClass('disabled')
+      $("#sort-button").attr('data-activates', 'sort-options')
+      $('.dropdown-button').dropdown({
+       inDuration: 300,
+       outDuration: 225,
+       constrain_width: false, // Does not change width of dropdown to that of the activator
+       hover: true, // Activate on hover
+       gutter: 0, // Spacing from edge
+       belowOrigin: true, // Displays dropdown below the button
+       alignment: 'right' // Displays dropdown with edge aligned to the left of button
+     }
+   );
+    }
+    cardItems.push(newItem)
+    todoCardArray.push(newItem.itemId)
+    createCard(newItem)
+    $('#quick-add-form').trigger('reset')
   })
   // Add item to list
   $("#add-item").submit(function(event) {
@@ -66,7 +115,6 @@ $(document).ready(function(){
     cardItems.push(newItem)
     todoCardArray.push(newItem.itemId)
     createCard(newItem)
-    deleteItem()
     $('#add-item').trigger('reset')
     $('#modal1').closeModal();
   })
@@ -87,7 +135,6 @@ $(document).ready(function(){
     repopulateList(cardItems)
   })
   $("#name").click(function() {
-    console.log(sortByName(cardItems))
     cardItems = sortByName(cardItems)
     clearList()
     repopulateList(cardItems)
@@ -97,10 +144,10 @@ $(document).ready(function(){
     clearList()
     repopulateList(cardItems)
   })
-  $("#origin").click(function() {
+  $("#origin").focus(function() {
     new google.maps.places.Autocomplete(document.getElementById('origin'))
   })
-  $("#destination").click(function() {
+  $("#destination").focus(function() {
     new google.maps.places.Autocomplete(document.getElementById('destination'))
   })
   $("#get-directions").submit(function(event) {
@@ -111,6 +158,26 @@ $(document).ready(function(){
     calculateRoute(cardItems, origin, destination)
     $('#get-directions').trigger('reset')
     $('#directions').closeModal();
+  })
+  $("#card-title").focus(function() {
+    if (!quickAddExpanded){
+      quickAddExpanded = true
+      let newInputField = $("<div id='quickLocationDiv' class='input-field'>")
+      let newButtonField = $("<div id='quickButtonDiv' class='input-field'>")
+      let quickAddForm = $("#quick-add-form")
+      newInputField.append("<label for='card-location'>Location</label>")
+      newInputField.append("<input id='card-location' type='text' required>")
+      newButtonField.append("<input type='submit' id='quick-add-submit' class='white-text btn' value='Add'>")
+      quickAddForm.append(newInputField)
+      quickAddForm.append(newButtonField)
+
+      $("#card-location").focus(function() {
+        var quickAutocomplete = new google.maps.places.Autocomplete(document.getElementById('card-location'))
+        quickAutocomplete.addListener('place_changed', function() {
+        locationObj = quickAutocomplete.getPlace()
+        })
+      })
+    }
   })
 });
 // Basic CRUD functions
@@ -158,7 +225,6 @@ function editItem(itemId) {
     }
     var editItemObj = cardItems[index]
     $todoItem.empty();
-
     let $col = $("<div class='col s8 m8'>")
     let $card = $("<div class='card hoverable'>")
     let $cardName = $("<span class='card-title'>")
@@ -216,6 +282,7 @@ function deleteItem(itemId) {
           break;
       }
   }
+  totalCardTimes -= cardItems[index].time * 60
   delete cardItems[index]
   $("#"+itemId).remove()
   if($.isEmptyObject(cardItems)) {
